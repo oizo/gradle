@@ -61,11 +61,6 @@ trait DirectoryBuildCacheFixture extends BuildCacheFixture {
         cacheDir.file("gc.properties")
     }
 
-    void cleanupBuildCacheNow() {
-        gcFile().assertIsFile()
-        gcFile().lastModified = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(60)
-    }
-
     List<TestFile> listCacheTempFiles() {
         cacheDir.listFiles().findAll { it.name.endsWith(BuildCacheTempFileStore.PARTIAL_FILE_SUFFIX) }.sort()
     }

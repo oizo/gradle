@@ -41,7 +41,7 @@ public class FixedAgeOldestCacheCleanup extends AbstractCacheCleanup {
     protected List<File> findFilesToDelete(final PersistentCache persistentCache, File[] filesEligibleForCleanup) {
         LOGGER.info("{} remove files older than {}.", persistentCache, new Date(minimumTimestamp));
 
-        final List<File> filesForDeletion = Lists.newArrayList();
+        List<File> filesForDeletion = Lists.newArrayListWithCapacity(filesEligibleForCleanup.length);
 
         for (File file : filesEligibleForCleanup) {
             if (file.lastModified() < minimumTimestamp) {
