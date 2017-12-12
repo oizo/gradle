@@ -26,6 +26,7 @@ import org.gradle.test.fixtures.ModuleArtifact
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.gradle.DependencyConstraintSpec
 import org.gradle.test.fixtures.gradle.DependencySpec
+import org.gradle.test.fixtures.gradle.FileSpec
 import org.gradle.test.fixtures.gradle.GradleFileModuleAdapter
 import org.gradle.test.fixtures.gradle.VariantMetadata
 
@@ -64,6 +65,7 @@ class IvyFileModule extends AbstractModule implements IvyModule {
 
         private final boolean ivy
         private final boolean gradle
+
         MetadataPublish(boolean ivy, boolean gradle) {
             this.ivy = ivy
             this.gradle = gradle
@@ -112,9 +114,26 @@ class IvyFileModule extends AbstractModule implements IvyModule {
 
     @Override
     IvyFileModule variant(String variant, Map<String, String> attributes) {
-        variants.add(new VariantMetadata(variant, attributes))
-        configuration(variant) //add variant also as configuration for plain ivy publishing
+        createVariant(variant, attributes)
         return this
+    }
+
+    private VariantMetadata createVariant(String variant, Map<String, String> attributes) {
+        def variantMetadata = new VariantMetadata(variant, attributes)
+        variants.add(variantMetadata)
+        configuration(variant) //add variant also as configuration for plain ivy publishing
+        return variantMetadata;
+    }
+
+    @Override
+    void withVariant(String name, @DelegatesTo(value = VariantMetadata, strategy = Closure.DELEGATE_FIRST) Closure<?> action) {
+        def variant = variants.find { it.name == name }
+        if (variant == null) {
+            variant = createVariant(name, [:])
+        }
+        action.resolveStrategy = Closure.DELEGATE_FIRST
+        action.delegate = variant
+        action()
     }
 
     IvyFileModule withXml(Closure action) {
@@ -340,6 +359,15 @@ class IvyFileModule extends AbstractModule implements IvyModule {
             }
         }
 
+        variants.each {
+            it.artifacts.each {
+                def variantArtifact = moduleDir.file(it.name)
+                publish (variantArtifact) { Writer writer ->
+                    writer << "${it.name} : Variant artifact $it.name"
+                }
+            }
+        }
+
 
         if (metadataPublish == MetadataPublish.NONE) {
             return this
@@ -359,6 +387,9 @@ class IvyFileModule extends AbstractModule implements IvyModule {
     }
 
     private void publishModuleMetadata() {
+        def defaultArtifacts = artifacts.collect { moduleArtifact(it) }.collect {
+            new FileSpec(it.file.name, it.file.name)
+        }
         GradleFileModuleAdapter adapter = new GradleFileModuleAdapter(organisation, module, revision,
             variants.collect { v ->
                 new VariantMetadata(
@@ -370,7 +401,7 @@ class IvyFileModule extends AbstractModule implements IvyModule {
                     dependencyConstraints.collect { d ->
                         new DependencyConstraintSpec(d.organisation, d.module, d.revision, d.rejects)
                     },
-                    artifacts.collect { moduleArtifact(it) }
+                    v.artifacts ?: defaultArtifacts
                 )
             },
             ['org.gradle.status': status]
@@ -393,7 +424,7 @@ class IvyFileModule extends AbstractModule implements IvyModule {
         if (branch) {
             infoAttrs.branch = branch
         }
-        infoAttrs += extraAttributes.collectEntries {key, value -> ["e:$key", value]}
+        infoAttrs += extraAttributes.collectEntries { key, value -> ["e:$key", value] }
         builder.info(infoAttrs) {
             if (extendsFrom) {
                 "extends"(extendsFrom)
@@ -406,10 +437,10 @@ class IvyFileModule extends AbstractModule implements IvyModule {
             configurations.each { name, config ->
                 def confAttrs = [name: name, visibility: config.visibility]
                 if (config.extendsFrom) {
-                    confAttrs.extends=config.extendsFrom.join(',')
+                    confAttrs.extends = config.extendsFrom.join(',')
                 }
                 if (!config.transitive) {
-                    confAttrs.transitive='false'
+                    confAttrs.transitive = 'false'
                 }
                 conf(confAttrs)
             }
@@ -417,7 +448,7 @@ class IvyFileModule extends AbstractModule implements IvyModule {
         builder.publications {
             artifacts.each { art ->
                 if (!art.undeclared) {
-                    def attrs = [name: art.name, type:art.type, ext: art.ext, conf:art.conf]
+                    def attrs = [name: art.name, type: art.type, ext: art.ext, conf: art.conf]
                     if (art.classifier) {
                         attrs["m:classifier"] = art.classifier
                     }
@@ -451,7 +482,7 @@ class IvyFileModule extends AbstractModule implements IvyModule {
             }
         }
 
-ivyFileWriter << '</ivy-module>'
+        ivyFileWriter << '</ivy-module>'
     }
 
     @Override

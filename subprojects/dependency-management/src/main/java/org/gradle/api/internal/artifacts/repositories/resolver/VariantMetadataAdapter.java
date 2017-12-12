@@ -17,11 +17,13 @@
 package org.gradle.api.internal.artifacts.repositories.resolver;
 
 import org.gradle.api.Action;
-import org.gradle.api.artifacts.DirectDependenciesMetadata;
 import org.gradle.api.artifacts.DependencyConstraintMetadata;
 import org.gradle.api.artifacts.DependencyConstraintsMetadata;
+import org.gradle.api.artifacts.DirectDependenciesMetadata;
 import org.gradle.api.artifacts.DirectDependencyMetadata;
 import org.gradle.api.artifacts.VariantMetadata;
+import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.internal.component.external.model.MutableModuleComponentResolveMetadata;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.typeconversion.NotationParser;
@@ -32,15 +34,18 @@ public class VariantMetadataAdapter implements VariantMetadata {
     private final Instantiator instantiator;
     private final NotationParser<Object, DirectDependencyMetadata> dependencyMetadataNotationParser;
     private final NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintMetadataNotationParser;
+    private final ImmutableAttributesFactory attributesFactory;
 
     public VariantMetadataAdapter(String name, MutableModuleComponentResolveMetadata metadata, Instantiator instantiator,
                                   NotationParser<Object, DirectDependencyMetadata> dependencyMetadataNotationParser,
-                                  NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintMetadataNotationParser) {
+                                  NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintMetadataNotationParser,
+                                  ImmutableAttributesFactory attributesFactory) {
         this.name = name;
         this.metadata = metadata;
         this.instantiator = instantiator;
         this.dependencyMetadataNotationParser = dependencyMetadataNotationParser;
         this.dependencyConstraintMetadataNotationParser = dependencyConstraintMetadataNotationParser;
+        this.attributesFactory = attributesFactory;
     }
 
     @Override
@@ -51,5 +56,10 @@ public class VariantMetadataAdapter implements VariantMetadata {
     @Override
     public void withDependencyConstraints(Action<DependencyConstraintsMetadata> action) {
         metadata.addDependencyConstraintMetadataRule(name, action, instantiator, dependencyMetadataNotationParser, dependencyConstraintMetadataNotationParser);
+    }
+
+    @Override
+    public void withAttributes(Action<? super AttributeContainer> action) {
+        metadata.addAttributesRule(name, action, attributesFactory);
     }
 }

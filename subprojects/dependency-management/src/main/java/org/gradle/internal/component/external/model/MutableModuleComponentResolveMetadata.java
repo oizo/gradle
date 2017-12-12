@@ -16,12 +16,14 @@
 package org.gradle.internal.component.external.model;
 
 import org.gradle.api.Action;
-import org.gradle.api.artifacts.DirectDependenciesMetadata;
 import org.gradle.api.artifacts.DependencyConstraintMetadata;
 import org.gradle.api.artifacts.DependencyConstraintsMetadata;
+import org.gradle.api.artifacts.DirectDependenciesMetadata;
 import org.gradle.api.artifacts.DirectDependencyMetadata;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.internal.component.model.ModuleSource;
 import org.gradle.internal.hash.HashValue;
 import org.gradle.internal.reflect.Instantiator;
@@ -86,4 +88,5 @@ public interface MutableModuleComponentResolveMetadata {
 
     void addDependencyMetadataRule(String variantName, Action<DirectDependenciesMetadata> action, Instantiator instantiator, NotationParser<Object, DirectDependencyMetadata> dependencyNotationParser, NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintNotationParser);
     void addDependencyConstraintMetadataRule(String variantName, Action<DependencyConstraintsMetadata> action, Instantiator instantiator, NotationParser<Object, DirectDependencyMetadata> dependencyNotationParser, NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintNotationParser);
+    void addAttributesRule(String variantName, Action<? super AttributeContainer> action, ImmutableAttributesFactory attributesFactory);
 }

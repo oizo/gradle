@@ -20,8 +20,12 @@ import org.gradle.integtests.fixtures.GradleMetadataResolveRunner
 import org.gradle.test.fixtures.HttpModule
 import org.gradle.test.fixtures.HttpRepository
 import org.gradle.test.fixtures.Module
+import org.gradle.test.fixtures.gradle.FileSpec
 import org.gradle.test.fixtures.ivy.IvyModule
 import org.gradle.test.fixtures.maven.MavenModule
+import org.gradle.test.fixtures.server.http.HttpArtifact
+import org.gradle.test.fixtures.server.http.IvyHttpModule
+import org.gradle.test.fixtures.server.http.MavenHttpModule
 
 class ModuleVersionSpec {
     private final String groupId
@@ -31,7 +35,7 @@ class ModuleVersionSpec {
 
     private final List<Object> dependsOn = []
     private final List<Object> constraints = []
-    private final Map<String, Map<String, String>> variants = [:]
+    private final List<VariantSpec> variants = []
     private final List<Closure<?>> withModule = []
     private List<InteractionExpectation> expectGetMetadata = [InteractionExpectation.NONE]
     private List<ArtifactExpectation> expectGetArtifact = []
@@ -93,8 +97,20 @@ class ModuleVersionSpec {
         expectGetMetadata << InteractionExpectation.MAYBE
     }
 
+    void expectGetVariantArtifacts(String variant) {
+        expectGetArtifact << new ArtifactExpectation(InteractionExpectation.GET, new VariantArtifacts(variant))
+    }
+
     void variant(String variant, Map<String, String> attributes) {
-        variants << [(variant): attributes]
+        variants << new VariantSpec(name:variant, attributes:attributes)
+    }
+
+    void variant(String name, @DelegatesTo(value= VariantSpec, strategy = Closure.DELEGATE_FIRST) Closure<?> spec) {
+        def variant = new VariantSpec(name: name)
+        spec.delegate = variant
+        spec.resolveStrategy = Closure.DELEGATE_FIRST
+        spec()
+        variants << variant
     }
 
     void dependsOn(coord) {
@@ -185,37 +201,48 @@ class ModuleVersionSpec {
 
         if (expectGetArtifact) {
             expectGetArtifact.each { ArtifactExpectation expectation ->
-                def artifact
+                def artifacts = []
                 if (expectation.spec) {
-                    if (module instanceof MavenModule) {
-                        artifact = module.getArtifact(expectation.spec)
+                    if (expectation.spec instanceof VariantArtifacts) {
+                        artifacts.addAll(expectation.spec.toArtifacts(module))
+                    } else if (module instanceof MavenModule) {
+                        artifacts << module.getArtifact(expectation.spec)
                     } else if (module instanceof IvyModule) {
-                        artifact = module.artifact(expectation.spec)
+                        artifacts << module.artifact(expectation.spec)
                     }
                 } else {
-                    artifact = module.artifact
+                    artifacts << module.artifact
                 }
-                switch (expectation.type) {
-                    case InteractionExpectation.GET:
-                        artifact.expectGet()
-                        break
-                    case InteractionExpectation.HEAD:
-                        artifact.expectHead()
-                        break
-                    case InteractionExpectation.HEAD_MISSING:
-                        artifact.expectHeadMissing()
-                        break
-                    case InteractionExpectation.MAYBE:
-                        artifact.allowGetOrHead()
-                        break
-                    case InteractionExpectation.NONE:
-                        break
+                artifacts.each { artifact ->
+                    switch (expectation.type) {
+                        case InteractionExpectation.GET:
+                            artifact.expectGet()
+                            break
+                        case InteractionExpectation.HEAD:
+                            artifact.expectHead()
+                            break
+                        case InteractionExpectation.HEAD_MISSING:
+                            artifact.expectHeadMissing()
+                            break
+                        case InteractionExpectation.MAYBE:
+                            artifact.allowGetOrHead()
+                            break
+                        case InteractionExpectation.NONE:
+                            break
+                    }
                 }
             }
         }
         if (variants) {
-            variants.each {
-                module.variant(it.key, it.value)
+            variants.each { variant ->
+                module.withVariant(variant.name) {
+                    attributes = variant.attributes
+                    artifacts = variant.artifacts.collect {
+                        // publish variant files as "classified". This can be arbitrary in practice, this
+                        // just makes it easier for publishing specs
+                        new FileSpec("${module.module}-${module.version}-$it.name.${it.ext}", it.url)
+                    }
+                }
             }
         }
 
@@ -254,6 +281,26 @@ class ModuleVersionSpec {
         if (mustPublish) {
             // do not publish modules created during a `repositoryInteractions { ... }` block
             module.publish()
+        }
+    }
+
+    class VariantArtifacts {
+        final String variant
+
+        VariantArtifacts(String name) {
+            this.variant = name
+        }
+
+        List<HttpArtifact> toArtifacts(IvyHttpModule ivyModule) {
+            variants.find { it.name == variant }.artifacts.collect {
+                ivyModule.getArtifact(classifier: it.name, ext: it.ext)
+            }
+        }
+
+        List<HttpArtifact> toArtifacts(MavenHttpModule mavenModule) {
+            variants.find { it.name == variant }.artifacts.collect {
+                mavenModule.getArtifact(classifier: it.name, type: it.ext)
+            }
         }
     }
 

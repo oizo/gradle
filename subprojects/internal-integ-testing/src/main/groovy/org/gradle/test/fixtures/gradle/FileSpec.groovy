@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package org.gradle.internal.component.model;
+package org.gradle.test.fixtures.gradle
 
-import org.gradle.api.internal.attributes.AttributeContainerInternal;
-import org.gradle.internal.DisplayName;
+import groovy.transform.CompileStatic
 
-import java.util.List;
+@CompileStatic
+class FileSpec {
+    String name
+    String url
 
-/**
- * Metadata for a basic variant of a component, that defines only artifacts and no dependencies.
- */
-public interface VariantMetadata {
-    String getName();
+    FileSpec(String name) {
+        this.name = name
+        this.url = name
+    }
 
-    DisplayName asDescribable();
-
-    AttributeContainerInternal getAttributes();
-
-    List<? extends ComponentArtifactMetadata> getArtifacts();
+    FileSpec(String name, String url) {
+        this.name = name
+        this.url = url
+    }
 }

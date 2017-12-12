@@ -22,6 +22,7 @@ import org.gradle.api.artifacts.DependencyConstraintMetadata;
 import org.gradle.api.artifacts.DirectDependencyMetadata;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.VariantMetadata;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.internal.component.external.model.MutableModuleComponentResolveMetadata;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.typeconversion.NotationParser;
@@ -33,14 +34,17 @@ public class ComponentMetadataDetailsAdapter implements ComponentMetadataDetails
     private final Instantiator instantiator;
     private final NotationParser<Object, DirectDependencyMetadata> dependencyMetadataNotationParser;
     private final NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintMetadataNotationParser;
+    private final ImmutableAttributesFactory attributesFactory;
 
     public ComponentMetadataDetailsAdapter(MutableModuleComponentResolveMetadata metadata, Instantiator instantiator,
                                            NotationParser<Object, DirectDependencyMetadata> dependencyMetadataNotationParser,
-                                           NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintMetadataNotationParser) {
+                                           NotationParser<Object, DependencyConstraintMetadata> dependencyConstraintMetadataNotationParser,
+                                           ImmutableAttributesFactory attributesFactory) {
         this.metadata = metadata;
         this.instantiator = instantiator;
         this.dependencyMetadataNotationParser = dependencyMetadataNotationParser;
         this.dependencyConstraintMetadataNotationParser = dependencyConstraintMetadataNotationParser;
+        this.attributesFactory = attributesFactory;
     }
 
     @Override
@@ -80,7 +84,7 @@ public class ComponentMetadataDetailsAdapter implements ComponentMetadataDetails
     @Override
     public void withVariant(String name, Action<VariantMetadata> action) {
         assertVariantExists(name);
-        action.execute(instantiator.newInstance(VariantMetadataAdapter.class, name, metadata, instantiator, dependencyMetadataNotationParser, dependencyConstraintMetadataNotationParser));
+        action.execute(instantiator.newInstance(VariantMetadataAdapter.class, name, metadata, instantiator, dependencyMetadataNotationParser, dependencyConstraintMetadataNotationParser, attributesFactory));
     }
 
     @Override

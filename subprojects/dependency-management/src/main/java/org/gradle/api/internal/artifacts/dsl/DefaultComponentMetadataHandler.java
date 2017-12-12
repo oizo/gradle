@@ -30,6 +30,7 @@ import org.gradle.api.internal.artifacts.ivyservice.DefaultIvyModuleDescriptor;
 import org.gradle.api.internal.artifacts.repositories.resolver.ComponentMetadataDetailsAdapter;
 import org.gradle.api.internal.artifacts.repositories.resolver.DependencyConstraintMetadataImpl;
 import org.gradle.api.internal.artifacts.repositories.resolver.DirectDependencyMetadataImpl;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.api.internal.notations.DependencyMetadataNotationParser;
 import org.gradle.api.internal.notations.ModuleIdentifierNotationConverter;
 import org.gradle.api.specs.Spec;
@@ -65,8 +66,9 @@ public class DefaultComponentMetadataHandler implements ComponentMetadataHandler
     private final NotationParser<Object, ModuleIdentifier> moduleIdentifierNotationParser;
     private final NotationParser<Object, DirectDependencyMetadataImpl> dependencyMetadataNotationParser;
     private final NotationParser<Object, DependencyConstraintMetadataImpl> dependencyConstraintMetadataNotationParser;
+    private final ImmutableAttributesFactory attributesFactory;
 
-    public DefaultComponentMetadataHandler(Instantiator instantiator, RuleActionAdapter<ComponentMetadataDetails> ruleActionAdapter, ImmutableModuleIdentifierFactory moduleIdentifierFactory) {
+    public DefaultComponentMetadataHandler(Instantiator instantiator, RuleActionAdapter<ComponentMetadataDetails> ruleActionAdapter, ImmutableModuleIdentifierFactory moduleIdentifierFactory, ImmutableAttributesFactory attributesFactory) {
         this.instantiator = instantiator;
         this.ruleActionAdapter = ruleActionAdapter;
         this.moduleIdentifierNotationParser = NotationParserBuilder
@@ -75,10 +77,11 @@ public class DefaultComponentMetadataHandler implements ComponentMetadataHandler
             .toComposite();
         this.dependencyMetadataNotationParser = DependencyMetadataNotationParser.parser(instantiator, DirectDependencyMetadataImpl.class);
         this.dependencyConstraintMetadataNotationParser = DependencyMetadataNotationParser.parser(instantiator, DependencyConstraintMetadataImpl.class);
+        this.attributesFactory = attributesFactory;
     }
 
-    public DefaultComponentMetadataHandler(Instantiator instantiator, ImmutableModuleIdentifierFactory moduleIdentifierFactory) {
-        this(instantiator, createAdapter(), moduleIdentifierFactory);
+    public DefaultComponentMetadataHandler(Instantiator instantiator, ImmutableModuleIdentifierFactory moduleIdentifierFactory, ImmutableAttributesFactory attributesFactory) {
+        this(instantiator, createAdapter(), moduleIdentifierFactory, attributesFactory);
     }
 
     private static RuleActionAdapter<ComponentMetadataDetails> createAdapter() {
@@ -138,7 +141,7 @@ public class DefaultComponentMetadataHandler implements ComponentMetadataHandler
             updatedMetadata = metadata;
         } else {
             MutableModuleComponentResolveMetadata mutableMetadata = metadata.asMutable();
-            ComponentMetadataDetails details = instantiator.newInstance(ComponentMetadataDetailsAdapter.class, mutableMetadata, instantiator, dependencyMetadataNotationParser, dependencyConstraintMetadataNotationParser);
+            ComponentMetadataDetails details = instantiator.newInstance(ComponentMetadataDetailsAdapter.class, mutableMetadata, instantiator, dependencyMetadataNotationParser, dependencyConstraintMetadataNotationParser, attributesFactory);
             processAllRules(metadata, details);
             updatedMetadata = mutableMetadata.asImmutable();
         }

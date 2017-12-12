@@ -35,6 +35,7 @@ import org.gradle.internal.resolve.ModuleVersionResolveException
 import org.gradle.internal.rules.RuleAction
 import org.gradle.internal.rules.RuleActionAdapter
 import org.gradle.internal.rules.RuleActionValidationException
+import org.gradle.util.TestUtil
 import spock.lang.Specification
 
 import javax.xml.namespace.QName
@@ -47,9 +48,9 @@ class DefaultComponentMetadataHandlerTest extends Specification {
     private static final String MODULE = "module"
 
     // For testing ComponentMetadataHandler capabilities
-    def handler = new DefaultComponentMetadataHandler(DirectInstantiator.INSTANCE, moduleIdentifierFactory)
+    def handler = new DefaultComponentMetadataHandler(DirectInstantiator.INSTANCE, moduleIdentifierFactory, TestUtil.attributesFactory())
     RuleActionAdapter<ComponentMetadataDetails> adapter = Mock(RuleActionAdapter)
-    def mockedHandler = new DefaultComponentMetadataHandler(DirectInstantiator.INSTANCE, adapter, moduleIdentifierFactory)
+    def mockedHandler = new DefaultComponentMetadataHandler(DirectInstantiator.INSTANCE, adapter, moduleIdentifierFactory, TestUtil.attributesFactory())
     def ruleAction = Stub(RuleAction)
 
     def "does nothing when no rules registered"() {

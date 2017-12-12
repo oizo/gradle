@@ -15,10 +15,12 @@
  */
 package org.gradle.test.fixtures
 
+import org.gradle.test.fixtures.gradle.VariantMetadata
+
 /**
  * Represents a module in a repository.
  */
-public interface Module {
+interface Module {
     Module publish()
     Module publishWithChangedContent()
     Module withModuleMetadata()
@@ -32,6 +34,8 @@ public interface Module {
      */
     ModuleArtifact getModuleMetadata()
     GradleModuleMetadata getParsedModuleMetadata()
+
+    void withVariant(String name, @DelegatesTo(value=VariantMetadata.class, strategy = Closure.DELEGATE_FIRST) groovy.lang.Closure<?> action);
 
 
 }
