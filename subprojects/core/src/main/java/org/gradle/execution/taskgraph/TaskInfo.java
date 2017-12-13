@@ -28,6 +28,7 @@ import org.gradle.api.internal.tasks.TaskOutputFilePropertySpec;
 import org.gradle.api.internal.tasks.TaskPropertyUtils;
 import org.gradle.api.internal.tasks.properties.CompositePropertyVisitor;
 import org.gradle.api.internal.tasks.properties.GetDestroyablesVisitor;
+import org.gradle.api.internal.tasks.properties.GetInputFilesVisitor;
 import org.gradle.api.internal.tasks.properties.GetLocalStateVisitor;
 import org.gradle.api.internal.tasks.properties.GetOutputFilesVisitor;
 import org.gradle.api.internal.tasks.properties.PropertyVisitor;
@@ -39,6 +40,7 @@ import javax.annotation.Nonnull;
 import java.util.TreeSet;
 
 public class TaskInfo implements Comparable<TaskInfo> {
+
 
     private enum TaskExecutionState {
         UNKNOWN, NOT_REQUIRED, SHOULD_RUN, MUST_RUN, MUST_NOT_RUN, EXECUTING, EXECUTED, SKIPPED
@@ -58,6 +60,7 @@ public class TaskInfo implements Comparable<TaskInfo> {
     private GetLocalStateVisitor localStateVisitor;
     private GetDestroyablesVisitor destroyablesVisitor;
     private HasFileInputsVisitor hasFileInputsVisitor;
+    private GetInputFilesVisitor inputFilesVisitor;
 
     public TaskInfo(TaskInternal task) {
         this.task = task;
@@ -247,6 +250,7 @@ public class TaskInfo implements Comparable<TaskInfo> {
             localStateVisitor = new GetLocalStateVisitor(beanName, resolver);
             destroyablesVisitor = new GetDestroyablesVisitor(beanName, resolver);
             hasFileInputsVisitor = new HasFileInputsVisitor();
+            inputFilesVisitor = new GetInputFilesVisitor(task.toString());
             TaskPropertyUtils.visitProperties(
                 propertyWalker,
                 task,
@@ -281,6 +285,11 @@ public class TaskInfo implements Comparable<TaskInfo> {
                 super.visitDependencies(context);
             }
         };
+    }
+
+    public FileCollection getInputs() {
+        resolveTaskProperties();
+        return inputFilesVisitor.getFiles();
     }
 
     public boolean hasFileInputs() {

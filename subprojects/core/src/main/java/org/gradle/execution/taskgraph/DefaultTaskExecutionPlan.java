@@ -34,6 +34,7 @@ import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.CachingTaskDependencyResolveContext;
+import org.gradle.api.internal.tasks.DefaultTaskDependency;
 import org.gradle.api.internal.tasks.TaskContainerInternal;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
@@ -169,6 +170,8 @@ public class DefaultTaskExecutionPlan implements TaskExecutionPlan {
                 // task in the queue
                 // Make sure it has been configured
                 ((TaskContainerInternal) task.getProject().getTasks()).prepareForExecution(task);
+                DefaultTaskDependency taskDependencies = (DefaultTaskDependency) task.getTaskDependencies();
+                taskDependencies.add(node.getInputs());
                 Set<? extends Task> dependsOnTasks = context.getDependencies(task);
                 for (Task dependsOnTask : dependsOnTasks) {
                     TaskInfo targetNode = nodeFactory.createNode(dependsOnTask);
