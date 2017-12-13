@@ -55,7 +55,22 @@ public interface VersionControlSpec extends Describable {
      */
     void setRootDir(String rootDir);
 
+    /**
+     * Returns the settings file to be used by the build.
+     * <p>
+     * This returns null if an alternative settings file has not been provided.
+     *
+     * @since 4.5
+     */
     @Nullable
     TextResource getSettingsFile();
+
+    /**
+     * Sets the settings file to be used by the build.
+     * <p>
+     * NOTE: This overrides any settings file provided by the build.
+     *
+     * @since 4.5
+     */
     void setSettingsFile(TextResource settingsScript);
 }
