@@ -16,6 +16,7 @@
 
 package org.gradle.internal.component.external.model;
 
+import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.internal.attributes.ImmutableAttributes;
 
 public interface MutableComponentVariantResolveMetadata {
@@ -29,5 +30,5 @@ public interface MutableComponentVariantResolveMetadata {
      *
      * @param attributes the component attributes
      */
-    void setAttributes(ImmutableAttributes attributes);
+    void setAttributes(AttributeContainer attributes);
 }

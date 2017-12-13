@@ -19,6 +19,7 @@ package org.gradle.internal.component.model;
 import org.gradle.api.artifacts.component.ComponentSelector;
 import org.gradle.api.internal.attributes.AttributesSchemaInternal;
 import org.gradle.api.internal.attributes.ImmutableAttributes;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public interface DependencyMetadata {
     /**
      * Select the target configurations for this dependency from the given target component.
      */
-    List<ConfigurationMetadata> selectConfigurations(ImmutableAttributes consumerAttributes, ComponentResolveMetadata targetComponent, AttributesSchemaInternal consumerSchema);
+    List<ConfigurationMetadata> selectConfigurations(ImmutableAttributes consumerAttributes, ComponentResolveMetadata targetComponent, AttributesSchemaInternal consumerSchema, ImmutableAttributesFactory attributesFactory);
 
     /**
      * Returns a view of the excludes filtered for this dependency in this configuration.

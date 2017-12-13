@@ -22,8 +22,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.internal.attributes.AttributeContainerInternal;
 import org.gradle.api.internal.attributes.AttributesSchemaInternal;
 import org.gradle.api.internal.attributes.EmptySchema;
+import org.gradle.api.internal.attributes.ImmutableAttributes;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.internal.component.external.descriptor.Configuration;
 import org.gradle.internal.component.model.ConfigurationMetadata;
 import org.gradle.internal.component.model.DefaultIvyArtifactName;
@@ -53,6 +57,7 @@ abstract class AbstractModuleComponentResolveMetadata implements ModuleComponent
     private final Map<String, ComponentMetadataRules> componentMetadataRules;
     private final ImmutableList<? extends ComponentVariant> variants;
     private final HashValue contentHash;
+    private final ImmutableAttributes attributes;
 
     // Configurations are built on-demand, but only once.
     private final Map<String, DefaultConfigurationMetadata> configurations = Maps.newHashMap();
@@ -69,9 +74,18 @@ abstract class AbstractModuleComponentResolveMetadata implements ModuleComponent
         configurationDefinitions = metadata.getConfigurationDefinitions();
         componentMetadataRules = metadata.componentMetadataRules;
         contentHash = metadata.getContentHash();
-
+        attributes = extractAttributes(metadata);
         variants = metadata.getVariants();
     }
+
+    private ImmutableAttributes extractAttributes(AbstractMutableModuleComponentResolveMetadata metadata) {
+        AttributeContainer attributes = metadata.getAttributes();
+        if (attributes == null) {
+            attributes = ImmutableAttributes.EMPTY;
+        }
+        return ((AttributeContainerInternal) attributes).asImmutable();
+    }
+
 
     /**
      * Creates a copy of the given metadata
@@ -87,7 +101,7 @@ abstract class AbstractModuleComponentResolveMetadata implements ModuleComponent
         configurationDefinitions = metadata.configurationDefinitions;
         componentMetadataRules = metadata.componentMetadataRules;
         contentHash = metadata.contentHash;
-
+        attributes = metadata.attributes;
         variants = metadata.variants;
     }
 
@@ -142,13 +156,13 @@ abstract class AbstractModuleComponentResolveMetadata implements ModuleComponent
      */
     protected abstract DefaultConfigurationMetadata createConfiguration(ModuleComponentIdentifier componentId, String name, boolean transitive, boolean visible, ImmutableList<String> hierarchy, ComponentMetadataRules componentMetadataRules);
 
-    private ImmutableList<? extends ConfigurationMetadata> buildVariantsForGraphTraversal(List<? extends ComponentVariant> variants) {
+    private ImmutableList<? extends ConfigurationMetadata> buildVariantsForGraphTraversal(List<? extends ComponentVariant> variants, ImmutableAttributesFactory attributesFactory) {
         if (variants.isEmpty()) {
             return ImmutableList.of();
         }
         List<VariantBackedConfigurationMetadata> configurations = new ArrayList<VariantBackedConfigurationMetadata>(variants.size());
         for (ComponentVariant variant : variants) {
-            configurations.add(new VariantBackedConfigurationMetadata(getComponentId(), variant, getOrDefault(componentMetadataRules.get(variant.getName()))));
+            configurations.add(new VariantBackedConfigurationMetadata(getComponentId(), variant, attributes, attributesFactory, getOrDefault(componentMetadataRules.get(variant.getName()))));
         }
         return ImmutableList.copyOf(configurations);
     }
@@ -205,9 +219,9 @@ abstract class AbstractModuleComponentResolveMetadata implements ModuleComponent
     }
 
     @Override
-    public synchronized ImmutableList<? extends ConfigurationMetadata> getVariantsForGraphTraversal() {
+    public synchronized ImmutableList<? extends ConfigurationMetadata> getVariantsForGraphTraversal(ImmutableAttributesFactory attributesFactory) {
         if (graphVariants == null) {
-            graphVariants = buildVariantsForGraphTraversal(variants);
+            graphVariants = buildVariantsForGraphTraversal(variants, attributesFactory);
         }
         return graphVariants;
     }

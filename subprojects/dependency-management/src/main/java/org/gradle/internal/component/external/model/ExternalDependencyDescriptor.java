@@ -21,6 +21,7 @@ import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentSelector;
 import org.gradle.api.internal.attributes.AttributesSchemaInternal;
 import org.gradle.api.internal.attributes.ImmutableAttributes;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.internal.component.model.AttributeConfigurationSelector;
 import org.gradle.internal.component.model.ComponentResolveMetadata;
 import org.gradle.internal.component.model.ConfigurationMetadata;
@@ -46,14 +47,14 @@ public abstract class ExternalDependencyDescriptor {
 
     protected abstract ExternalDependencyDescriptor withRequested(ModuleComponentSelector newRequested);
 
-    public List<ConfigurationMetadata> getMetadataForConfigurations(ImmutableAttributes consumerAttributes, AttributesSchemaInternal consumerSchema, ComponentIdentifier fromComponent, ConfigurationMetadata fromConfiguration, ComponentResolveMetadata targetComponent) {
-        if (!targetComponent.getVariantsForGraphTraversal().isEmpty()) {
+    public List<ConfigurationMetadata> getMetadataForConfigurations(ImmutableAttributes consumerAttributes, AttributesSchemaInternal consumerSchema, ComponentIdentifier fromComponent, ConfigurationMetadata fromConfiguration, ComponentResolveMetadata targetComponent, ImmutableAttributesFactory attributesFactory) {
+        if (!targetComponent.getVariantsForGraphTraversal(attributesFactory).isEmpty()) {
             // This condition shouldn't be here, and attribute matching should always be applied when the target has variants
             // however, the schemas and metadata implementations are not yet set up for this, so skip this unless:
             // - the consumer has asked for something specific (by providing attributes), as the other metadata types are broken for the 'use defaults' case
             // - or the target is a component from a Maven/Ivy repo as we can assume this is well behaved
             if (!consumerAttributes.isEmpty() || targetComponent instanceof ModuleComponentResolveMetadata) {
-                return ImmutableList.of(AttributeConfigurationSelector.selectConfigurationUsingAttributeMatching(consumerAttributes, targetComponent, consumerSchema));
+                return ImmutableList.of(AttributeConfigurationSelector.selectConfigurationUsingAttributeMatching(consumerAttributes, targetComponent, consumerSchema, attributesFactory));
             }
         }
         return selectLegacyConfigurations(fromComponent, fromConfiguration, targetComponent);

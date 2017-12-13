@@ -49,7 +49,7 @@ class ComponentMetadataDetailsAdapterTest extends Specification {
     }
     private DefaultMutableMavenModuleResolveMetadata gradleComponentMetadata() {
         def metadata = new DefaultMutableMavenModuleResolveMetadata(versionIdentifier, componentIdentifier)
-        variantDefinedInGradleMetadata = metadata.addVariant("variantDefinedInGradleMetadata", attributes) //gradle metadata is distinguished from maven POM metadata by explicitly defining variants
+        variantDefinedInGradleMetadata = metadata.addVariant("variantDefinedInGradleMetadata", attributes,) //gradle metadata is distinguished from maven POM metadata by explicitly defining variants
         metadata
     }
 

@@ -76,7 +76,7 @@ abstract class AbstractDependencyMetadataRulesTest extends Specification {
     private gradleComponentMetadata(String[] deps) {
         def metadata = new DefaultMutableMavenModuleResolveMetadata(versionIdentifier, componentIdentifier)
         //gradle metadata is distinguished from maven POM metadata by explicitly defining variants
-        defaultVariant = metadata.addVariant("default", attributes)
+        defaultVariant = metadata.addVariant("default", attributes,)
         deps.each { name ->
             if (addAllDependenciesAsConstraints()) {
                 defaultVariant.addDependencyConstraint("org.test", name, new DefaultMutableVersionConstraint("1.0"))
@@ -259,6 +259,6 @@ abstract class AbstractDependencyMetadataRulesTest extends Specification {
         def componentSelector = newSelector(consumerIdentifier.group, consumerIdentifier.name, new DefaultMutableVersionConstraint(consumerIdentifier.version))
         def consumer = new LocalComponentDependencyMetadata(componentIdentifier, componentSelector, "default", attributes, null, [] as List, [], false, false, true, false)
 
-        consumer.selectConfigurations(attributes, immutable, schema)[0]
+        consumer.selectConfigurations(attributes, immutable, schema, TestUtil.attributesFactory())[0]
     }
 }

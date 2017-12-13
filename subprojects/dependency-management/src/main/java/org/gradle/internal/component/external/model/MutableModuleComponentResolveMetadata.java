@@ -81,6 +81,10 @@ public interface MutableModuleComponentResolveMetadata {
      */
     boolean definesVariant(String name);
 
+    AttributeContainer getAttributes();
+
+    void setAttributes(AttributeContainer attributes);
+
     /**
      * Creates an artifact for this module. Does not mutate this metadata.
      */

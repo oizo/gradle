@@ -17,6 +17,7 @@
 package org.gradle.internal.component;
 
 import org.gradle.api.internal.attributes.AttributeContainerInternal;
+import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.internal.component.model.AttributeMatcher;
 import org.gradle.internal.component.model.ComponentResolveMetadata;
 import org.gradle.internal.component.model.ConfigurationMetadata;
@@ -31,13 +32,13 @@ public class NoMatchingConfigurationSelectionException extends RuntimeException 
     public NoMatchingConfigurationSelectionException(
         AttributeContainerInternal fromConfigurationAttributes,
         AttributeMatcher attributeMatcher,
-        ComponentResolveMetadata targetComponent) {
-        super(generateMessage(fromConfigurationAttributes, attributeMatcher, targetComponent));
+        ComponentResolveMetadata targetComponent, ImmutableAttributesFactory attributesFactory) {
+        super(generateMessage(fromConfigurationAttributes, attributeMatcher, targetComponent, attributesFactory));
     }
 
-    private static String generateMessage(AttributeContainerInternal fromConfigurationAttributes, AttributeMatcher attributeMatcher, ComponentResolveMetadata targetComponent) {
+    private static String generateMessage(AttributeContainerInternal fromConfigurationAttributes, AttributeMatcher attributeMatcher, ComponentResolveMetadata targetComponent, ImmutableAttributesFactory attributesFactory) {
         Map<String, ConfigurationMetadata> configurations = new TreeMap<String, ConfigurationMetadata>();
-        for (ConfigurationMetadata configurationMetadata : targetComponent.getVariantsForGraphTraversal()) {
+        for (ConfigurationMetadata configurationMetadata : targetComponent.getVariantsForGraphTraversal(attributesFactory)) {
             configurations.put(configurationMetadata.getName(), configurationMetadata);
         }
         TreeFormatter formatter = new TreeFormatter();
