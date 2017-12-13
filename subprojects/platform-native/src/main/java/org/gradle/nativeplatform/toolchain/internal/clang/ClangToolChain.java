@@ -51,9 +51,4 @@ public class ClangToolChain extends AbstractGccCompatibleToolChain implements Cl
     protected String getTypeName() {
         return "Clang";
     }
-
-    @Override
-    public boolean supportsModuleMaps() {
-        return true;
-    }
 }
