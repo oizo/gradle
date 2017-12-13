@@ -19,7 +19,9 @@ package org.gradle.language.swift;
 import org.gradle.api.Incubating;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Provider;
+import org.gradle.nativeplatform.ModuleMap;
 
 /**
  * A binary built from Swift source.
@@ -63,6 +65,13 @@ public interface SwiftBinary extends SoftwareComponent {
      * @since 4.4
      */
     FileCollection getCompileModules();
+
+    /**
+     * Returns any module maps required to compile this binary.
+     *
+     * @since 4.5
+     */
+    ListProperty<ModuleMap> getCompileModuleMaps();
 
     /**
      * Returns the link libraries to use to link this binary. Includes the link libraries of the component's dependencies.

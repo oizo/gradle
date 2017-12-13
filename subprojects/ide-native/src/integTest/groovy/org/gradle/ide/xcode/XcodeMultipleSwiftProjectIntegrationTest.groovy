@@ -208,9 +208,7 @@ class XcodeMultipleSwiftProjectIntegrationTest extends AbstractXcodeIntegrationS
         rootXcodeWorkspace.contentFile.assertHasProjects("${rootProjectName}.xcodeproj", 'app/app.xcodeproj', 'cppGreeter/cppGreeter.xcodeproj', 'hello/hello.xcodeproj')
 
         def appProject = xcodeProject("app/app.xcodeproj").projectFile
-        appProject.indexTarget.getBuildSettings().SWIFT_INCLUDE_PATHS == toSpaceSeparatedList(file("hello/build/modules/main/debug"), file("cppGreeter/build/map"))
-        def helloProject = xcodeProject("hello/hello.xcodeproj").projectFile
-        helloProject.indexTarget.getBuildSettings().SWIFT_INCLUDE_PATHS == toSpaceSeparatedList(file("cppGreeter/build/map"))
+        appProject.indexTarget.getBuildSettings().SWIFT_INCLUDE_PATHS.contains toSpaceSeparatedList(file("hello/build/modules/main/debug"))
 
         when:
         def resultDebugApp = xcodebuild
@@ -219,7 +217,7 @@ class XcodeMultipleSwiftProjectIntegrationTest extends AbstractXcodeIntegrationS
             .succeeds()
 
         then:
-        resultDebugApp.assertTasksExecuted(":cppGreeter:generateModuleMap", ":cppGreeter:dependDebugCpp", ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
+        resultDebugApp.assertTasksExecuted(":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
             ':hello:compileDebugSwift', ':hello:linkDebug',
             ':app:compileDebugSwift', ':app:linkDebug', ':app:_xcode___App_Debug')
 
@@ -232,7 +230,7 @@ class XcodeMultipleSwiftProjectIntegrationTest extends AbstractXcodeIntegrationS
 
         then:
         resultReleaseHello.assertTasksExecuted(':hello:compileReleaseSwift', ':hello:linkRelease',
-            ":cppGreeter:generateModuleMap", ":cppGreeter:dependReleaseCpp", ":cppGreeter:compileReleaseCpp", ":cppGreeter:linkRelease", ":cppGreeter:stripSymbolsRelease",
+            ":cppGreeter:compileReleaseCpp", ":cppGreeter:linkRelease", ":cppGreeter:stripSymbolsRelease",
             ':hello:_xcode___Hello_Release')
     }
 

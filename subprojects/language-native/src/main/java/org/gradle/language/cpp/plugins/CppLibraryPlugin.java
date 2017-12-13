@@ -20,12 +20,10 @@ import com.google.common.collect.ImmutableSet;
 import org.gradle.api.Action;
 import org.gradle.api.Incubating;
 import org.gradle.api.Plugin;
-import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.component.SoftwareComponent;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.internal.artifacts.publish.ArchivePublishArtifact;
 import org.gradle.api.internal.file.FileOperations;
 import org.gradle.api.internal.project.ProjectInternal;
@@ -43,11 +41,7 @@ import org.gradle.language.cpp.CppLibrary;
 import org.gradle.language.cpp.internal.DefaultCppLibrary;
 import org.gradle.language.cpp.internal.MainLibraryVariant;
 import org.gradle.language.cpp.internal.NativeVariant;
-import org.gradle.model.internal.registry.ModelRegistry;
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform;
-import org.gradle.nativeplatform.tasks.GenerateModuleMap;
-import org.gradle.nativeplatform.toolchain.internal.NativeToolChainInternal;
-import org.gradle.nativeplatform.toolchain.internal.NativeToolChainRegistryInternal;
+import org.gradle.nativeplatform.ModuleMap;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -56,7 +50,6 @@ import java.util.concurrent.Callable;
 
 import static org.gradle.language.cpp.CppBinary.DEBUGGABLE_ATTRIBUTE;
 import static org.gradle.language.cpp.CppBinary.OPTIMIZED_ATTRIBUTE;
-import static org.gradle.util.CollectionUtils.collect;
 
 /**
  * <p>A plugin that produces a native library from C++ source.</p>
@@ -104,30 +97,6 @@ public class CppLibraryPlugin implements Plugin<ProjectInternal> {
         // TODO - add lifecycle tasks
         // TODO - extract some common code to setup the configurations
 
-        final ModelRegistry modelRegistry = project.getModelRegistry();
-        final DefaultNativePlatform currentPlatform = new DefaultNativePlatform("current");
-        final NativeToolChainInternal toolChain = (NativeToolChainInternal) modelRegistry.realize("toolChains", NativeToolChainRegistryInternal.class).getForPlatform(currentPlatform);
-
-        Provider<RegularFile> moduleMapFile = project.getLayout().getBuildDirectory().file("map/module.modulemap");
-        library.getModuleMapFile().set(moduleMapFile);
-        if (toolChain.supportsModuleMaps()) {
-            GenerateModuleMap generateModuleMap = tasks.create("generateModuleMap", GenerateModuleMap.class);
-            generateModuleMap.getModuleMapFile().set(moduleMapFile);
-            generateModuleMap.getModuleMap().getModuleName().set(library.getBaseName());
-            generateModuleMap.getModuleMap().getPublicHeaderPaths().addAll(project.provider(new Callable<Iterable<String>>() {
-                @Override
-                public Iterable<String> call() throws Exception {
-                    return collect(library.getPublicHeaderDirs(), new Transformer<String, File>() {
-                        @Override
-                        public String transform(File file) {
-                            return file.getAbsolutePath();
-                        }
-                    });
-                }
-            }));
-            library.getModuleMapFile().set(generateModuleMap.getModuleMapFile());
-        }
-
         // Define the outgoing artifacts
         // TODO - move this to the base plugin
 
@@ -154,7 +123,7 @@ public class CppLibraryPlugin implements Plugin<ProjectInternal> {
         swiftApiElements.extendsFrom(library.getApiDependencies());
         swiftApiElements.setCanBeResolved(false);
         swiftApiElements.getAttributes().attribute(Usage.USAGE_ATTRIBUTE, swiftApiUsage);
-        swiftApiElements.getOutgoing().artifact(library.getModuleMapFile());
+        swiftApiElements.getAttributes().attribute(ModuleMap.REQUIRES_MODULE_MAP, true);
         swiftApiElements.getOutgoing().artifact(publicHeaders);
 
         Configuration implementation = library.getImplementationDependencies();

@@ -49,9 +49,10 @@ class SwiftApplicationCppInteroperabilityIntegrationTest extends AbstractSwiftMi
         expect:
         succeeds ":app:assemble"
         result.assertTasksExecuted(
-            ":cppGreeter:generateModuleMap", ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
+            ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
             ":app:compileDebugSwift", ":app:linkDebug", ":app:installDebug", ":app:assemble")
 
+        file("app/build/maps/cppGreeter/module.modulemap").exists()
         installation("app/build/install/main/debug").exec().out == app.expectedOutput
     }
 
@@ -89,9 +90,10 @@ class SwiftApplicationCppInteroperabilityIntegrationTest extends AbstractSwiftMi
         succeeds ":app:assemble"
         result.assertTasksExecuted(
             ":greeter:compileDebugSwift", ":greeter:linkDebug",
-            ":cppGreeter:generateModuleMap", ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
+            ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
             ":app:compileDebugSwift", ":app:linkDebug", ":app:installDebug", ":app:assemble")
 
+        file("greeter/build/maps/cppGreeter/module.modulemap").exists()
         installation("app/build/install/main/debug").exec().out == app.expectedOutput
     }
 
@@ -126,10 +128,11 @@ class SwiftApplicationCppInteroperabilityIntegrationTest extends AbstractSwiftMi
         expect:
         succeeds ":app:assemble"
         result.assertTasksExecuted(
-            ":cppGreeter:generateModuleMap", ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
+            ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
             ":logger:compileDebugCpp", ":logger:linkDebug",
             ":app:compileDebugSwift", ":app:linkDebug", ":app:installDebug", ":app:assemble")
 
+        file("app/build/maps/cppGreeter/module.modulemap").exists()
         installation("app/build/install/main/debug").exec().out == app.expectedOutput
     }
 
@@ -157,7 +160,7 @@ class SwiftApplicationCppInteroperabilityIntegrationTest extends AbstractSwiftMi
         expect:
         succeeds ":app:assemble"
         result.assertTasksExecuted(
-            ":cppGreeter:generateModuleMap", ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
+            ":cppGreeter:compileDebugCpp", ":cppGreeter:linkDebug",
             ":app:compileDebugSwift", ":app:linkDebug", ":app:installDebug", ":app:assemble")
 
         installation("app/build/install/main/debug").exec().out == app.expectedOutput

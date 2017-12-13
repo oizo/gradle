@@ -19,6 +19,7 @@ package org.gradle.nativeplatform.test.xctest.internal
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.internal.file.FileOperations
+import org.gradle.api.provider.ProviderFactory
 import org.gradle.language.swift.SwiftComponent
 import org.gradle.nativeplatform.test.xctest.SwiftXCTestSuite
 import org.gradle.util.TestUtil
@@ -27,7 +28,7 @@ import spock.lang.Specification
 class DefaultSwiftXCTestSuiteTest extends Specification {
     def "has only a single executables"() {
         def componentUnderTest = Mock(SwiftComponent)
-        SwiftXCTestSuite testSuite = new DefaultSwiftXCTestSuite("test", Mock(ProjectLayout), Stub(FileOperations), TestUtil.objectFactory(), Stub(ConfigurationContainer))
+        SwiftXCTestSuite testSuite = new DefaultSwiftXCTestSuite("test", Mock(ProjectLayout), Stub(FileOperations), Stub(ProviderFactory), TestUtil.objectFactory(), Stub(ConfigurationContainer))
         testSuite.testedComponent.set(componentUnderTest)
         expect:
         testSuite.developmentBinary.name == "testExecutable"
