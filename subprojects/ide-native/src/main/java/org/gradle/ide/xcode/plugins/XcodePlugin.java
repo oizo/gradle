@@ -23,13 +23,11 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Incubating;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
-import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
@@ -62,7 +60,6 @@ import org.gradle.language.swift.SwiftComponent;
 import org.gradle.language.swift.plugins.SwiftApplicationPlugin;
 import org.gradle.language.swift.plugins.SwiftLibraryPlugin;
 import org.gradle.nativeplatform.tasks.AbstractLinkTask;
-import org.gradle.nativeplatform.test.xctest.SwiftXCTestBinary;
 import org.gradle.nativeplatform.test.xctest.SwiftXCTestSuite;
 import org.gradle.nativeplatform.test.xctest.plugins.XCTestConventionPlugin;
 import org.gradle.plugins.ide.internal.IdePlugin;
@@ -198,12 +195,6 @@ public class XcodePlugin extends IdePlugin {
     }
 
     private void configureXcodeForXCTest(final Project project, PBXTarget.ProductType productType) {
-        Transformer<Directory, SwiftXCTestBinary> toInstallDirectory = new Transformer<Directory, SwiftXCTestBinary>() {
-            @Override
-            public Directory transform(SwiftXCTestBinary binary) {
-                return binary.getInstallDirectory().get();
-            }
-        };
         SwiftXCTestSuite component = project.getExtensions().getByType(SwiftXCTestSuite.class);
         FileCollection sources = component.getSwiftSource();
         xcode.getProject().getGroups().getTests().from(sources);
