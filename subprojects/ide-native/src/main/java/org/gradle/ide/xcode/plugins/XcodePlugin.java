@@ -23,11 +23,13 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Incubating;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.Transformer;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
@@ -60,6 +62,7 @@ import org.gradle.language.swift.SwiftComponent;
 import org.gradle.language.swift.plugins.SwiftApplicationPlugin;
 import org.gradle.language.swift.plugins.SwiftLibraryPlugin;
 import org.gradle.nativeplatform.tasks.AbstractLinkTask;
+import org.gradle.nativeplatform.test.xctest.SwiftXCTestBinary;
 import org.gradle.nativeplatform.test.xctest.SwiftXCTestSuite;
 import org.gradle.nativeplatform.test.xctest.plugins.XCTestConventionPlugin;
 import org.gradle.plugins.ide.internal.IdePlugin;
@@ -195,14 +198,20 @@ public class XcodePlugin extends IdePlugin {
     }
 
     private void configureXcodeForXCTest(final Project project, PBXTarget.ProductType productType) {
+        Transformer<Directory, SwiftXCTestBinary> toInstallDirectory = new Transformer<Directory, SwiftXCTestBinary>() {
+            @Override
+            public Directory transform(SwiftXCTestBinary binary) {
+                return binary.getInstallDirectory().get();
+            }
+        };
         SwiftXCTestSuite component = project.getExtensions().getByType(SwiftXCTestSuite.class);
         FileCollection sources = component.getSwiftSource();
         xcode.getProject().getGroups().getTests().from(sources);
 
         String targetName = component.getModule().get() + " " + toString(productType);
-        XcodeTarget target = newTarget(targetName, component.getModule().get(), productType, toGradleCommand(project.getRootProject()), getBridgeTaskPath(project), component.getDevelopmentBinary().getInstallDirectory(), component.getDevelopmentBinary().getInstallDirectory(), sources);
-        target.getCompileModules().from(component.getDevelopmentBinary().getCompileModules());
-        target.addTaskDependency(filterArtifactsFromImplicitBuilds((Configuration) component.getDevelopmentBinary().getCompileModules()).getBuildDependencies());
+        XcodeTarget target = newTarget(targetName, component.getModule().get(), productType, toGradleCommand(project.getRootProject()), getBridgeTaskPath(project), component.getDevelopmentBinary().get().getInstallDirectory(), component.getDevelopmentBinary().get().getInstallDirectory(), sources);
+        target.getCompileModules().from(component.getDevelopmentBinary().get().getCompileModules());
+        target.addTaskDependency(filterArtifactsFromImplicitBuilds((Configuration) component.getDevelopmentBinary().get().getCompileModules()).getBuildDependencies());
         xcode.getProject().addTarget(target);
     }
 
@@ -226,8 +235,8 @@ public class XcodePlugin extends IdePlugin {
 
                 String targetName = component.getModule().get() + " " + XcodePlugin.toString(productType);
                 XcodeTarget target = newTarget(targetName, component.getModule().get(), productType, toGradleCommand(project.getRootProject()), getBridgeTaskPath(project), linkDebug.getBinaryFile(), linkRelease.getBinaryFile(), sources);
-                target.getCompileModules().from(component.getDevelopmentBinary().getCompileModules());
-                target.addTaskDependency(filterArtifactsFromImplicitBuilds((Configuration) component.getDevelopmentBinary().getCompileModules()).getBuildDependencies());
+                target.getCompileModules().from(component.getDevelopmentBinary().get().getCompileModules());
+                target.addTaskDependency(filterArtifactsFromImplicitBuilds((Configuration) component.getDevelopmentBinary().get().getCompileModules()).getBuildDependencies());
                 xcode.getProject().addTarget(target);
 
                 createSchemeTask(project.getTasks(), targetName, xcode.getProject());
@@ -271,7 +280,7 @@ public class XcodePlugin extends IdePlugin {
                 String targetName = StringUtils.capitalize(project.getName());
                 XcodeTarget target = newTarget(targetName + " " + XcodePlugin.toString(productType), targetName, productType, toGradleCommand(project.getRootProject()), getBridgeTaskPath(project), linkDebug.getBinaryFile(), linkRelease.getBinaryFile(), sources);
                 target.getHeaderSearchPaths().from(component.getDevelopmentBinary().getCompileIncludePath());
-                target.addTaskDependency(filterArtifactsFromImplicitBuilds(((DefaultCppBinary) component.getDevelopmentBinary()).getIncludePathConfiguration()).getBuildDependencies());
+                target.getTaskDependencies().add(filterArtifactsFromImplicitBuilds(((DefaultCppBinary) component.getDevelopmentBinary()).getIncludePathConfiguration()).getBuildDependencies());
                 xcode.getProject().addTarget(target);
 
                 createSchemeTask(project.getTasks(), targetName + " " + XcodePlugin.toString(productType), xcode.getProject());
